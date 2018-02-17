@@ -5,7 +5,5 @@ package com.github.teamclc.sanguosha;
  */
 
 public class SanguoshaPlugin {
-    public static void init() {
 
-    }
 }
