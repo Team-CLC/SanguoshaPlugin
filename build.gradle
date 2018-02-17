@@ -1,0 +1,26 @@
+plugins {
+    id "org.jetbrains.kotlin.jvm" version "1.2.21"
+    id "java"
+}
+
+group 'com.github.teamclc.sanguosha'
+version '1.0.0-SNAPSHOT'
+
+sourceCompatibility = targetCompatibility = 1.8
+
+repositories {
+    jcenter()
+    maven {
+        url "https://dl.bintray.com/lasmgratel/maven/"
+    }
+}
+
+dependencies {
+    compile 'com.google.code.gson:gson:2.8.0'
+    compile 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+    compile 'cc.huajistudio.aeb:asmeventbus:0.1'
+    compile 'com.google.guava:guava:19.0'
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.jetbrains.kotlin:kotlin-test'
+    testCompile 'org.jetbrains.kotlin:kotlin-test-junit'
+}
