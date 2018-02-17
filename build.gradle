@@ -24,3 +24,11 @@ dependencies {
     testCompile 'org.jetbrains.kotlin:kotlin-test'
     testCompile 'org.jetbrains.kotlin:kotlin-test-junit'
 }
+
+task fatJar(type: Jar) {
+    manifest {
+    }
+    baseName = 'sgsplugin'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
