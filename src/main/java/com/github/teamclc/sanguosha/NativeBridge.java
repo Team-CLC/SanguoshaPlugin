@@ -21,7 +21,7 @@ public class NativeBridge {
 
     }
 
-    public static void groupMessageReceived(String message, int subtype, int msgid, long fromQQ, long fromGroup) {
+    public static boolean groupMessageReceived(String message, int subtype, int msgid, long fromQQ, long fromGroup) {
 
     }
 
