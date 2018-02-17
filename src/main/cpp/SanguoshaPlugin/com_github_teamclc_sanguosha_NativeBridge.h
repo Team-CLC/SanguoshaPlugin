@@ -28,7 +28,7 @@ JNIEXPORT jint JNICALL Java_com_github_teamclc_sanguosha_NativeBridge_sendGroupM
  * Method:    sendPrivateMesaage
  * Signature: (Ljava/lang/String;J)I
  */
-JNIEXPORT jint JNICALL Java_com_github_teamclc_sanguosha_NativeBridge_sendPrivateMesaage
+JNIEXPORT jint JNICALL Java_com_github_teamclc_sanguosha_NativeBridge_sendPrivateMessage
   (JNIEnv *, jclass, jstring, jlong);
 
 #ifdef __cplusplus
