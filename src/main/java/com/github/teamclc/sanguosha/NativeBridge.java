@@ -26,9 +26,4 @@ public class NativeBridge {
     }
 
 
-
-    public static void groupMsgReceives() {
-
-    }
-
 }
