@@ -7,7 +7,7 @@ package com.github.teamclc.sanguosha;
 public class NativeBridge {
     public static native void log(String content, int priority, String category);
     public static native int sendGroupMessage(String message, long toGroup);
-    public static native int sendPrivateMesaage(String message, long toQQ);
+    public static native int sendPrivateMessage(String message, long toQQ);
 
     public static void init() {
         log("已启动。", 10, "测试");
