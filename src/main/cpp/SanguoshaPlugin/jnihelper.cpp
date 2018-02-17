@@ -42,7 +42,7 @@ std::wstring getJVMModulePath1(LPWSTR javaHome) {
 	wchar_t lastChar = *(path.end() - 1);
 	if (lastChar != '\\' && lastChar != '/')
 		path += '\\';
-	path += L"bin\\server\\jni.dll";
+	path += L"bin\\server\\jvm.dll";
 	return path;
 }
 
@@ -51,7 +51,7 @@ std::wstring getJVMModulePath2(LPWSTR javaHome) {
 	wchar_t lastChar = *(path.end() - 1);
 	if (lastChar != '\\' && lastChar != '/')
 		path += '\\';
-	path += L"jre\\bin\\server\\jni.dll";
+	path += L"jre\\bin\\server\\jvm.dll";
 	return path;
 }
 
@@ -184,7 +184,7 @@ jstring LPCSTRTojstring(JNIEnv * env, LPCSTR str)
 		buffer = new jchar[length * 2 + 1];
 		if (MultiByteToWideChar(CP_GB2312, 0, str, slen, (LPWSTR)buffer, length) > 0)
 			rtn = env->NewString(buffer, length);
-		free(buffer);
+		delete[] buffer;
 	}
 	return rtn;
 }
