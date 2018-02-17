@@ -5,13 +5,13 @@ HMODULE jmodule = nullptr;
 JavaVM *vm = nullptr;
 
 #define MAX_PATH_SIZE 512
-HRESULT tryLoadJava(std::wstring path, LPCSTR jarPath)
+HRESULT tryLoadJava(std::wstring path, std::atring jarPath)
 {
 	JavaVMInitArgs startupArgs;
 	JavaVMOption options[3];
 	options[0].optionString = "-Djava.compiler=NONE";
 	options[1].optionString = new char[MAX_PATH_SIZE];
-	strcpy(options[1].optionString, jarPath);
+	strcpy(options[1].optionString, jarPath.c_str());
 	options[2].optionString = "-verbose:NONE";
 
 	startupArgs.version = JNI_VERSION_1_8;
@@ -20,12 +20,12 @@ HRESULT tryLoadJava(std::wstring path, LPCSTR jarPath)
 	startupArgs.ignoreUnrecognized = JNI_TRUE;
 
 	jmodule = LoadLibrary(path.c_str());
-	if (jmodule == nullptr) return E_FAIL;
+	if (jmodule == nullptr) return HRESULT_FROM_WIN32(GetLastError());
 	
 	auto JNICreateJavaVM = reinterpret_cast<JNICREATEPROC>(GetProcAddress(jmodule, "JNI_CreateJavaVM"));
 	if (JNICreateJavaVM == nullptr) {
 		FreeLibrary(jmodule);
-		return E_FAIL;
+		return HRESULT_FROM_WIN32(GetLastError());
 	}
 
 	JNIEnv *env;
@@ -55,7 +55,7 @@ std::wstring getJVMModulePath2(LPWSTR javaHome) {
 	return path;
 }
 
-HRESULT tryLoadJavaFromJavaHome(LPCSTR jarPath) {
+HRESULT tryLoadJavaFromJavaHome(std::string jarPath) {
 	LPWSTR javaHome = new wchar_t[MAX_PATH_SIZE];
 	DWORD envCode = GetEnvironmentVariable(L"JAVA_HOME", javaHome, MAX_PATH_SIZE);
 	if (envCode <= 0) return E_FAIL;
@@ -68,45 +68,45 @@ HRESULT tryLoadJavaFromJavaHome(LPCSTR jarPath) {
 	return tryLoadJava(path, jarPath);
 }
 
-HRESULT tryLoadJavaFromRegistry(LPCSTR jarPath) {
+HRESLT tryLoadJavaFromRegistry(std::string jarPath) {
 	HKEY rootKey;
 	LSTATUS rest;
-	rest = RegOpenKey(HKEY_LOCAL_MACHINE, L"SOFTWARE\\JavaSoft\\Java Runtime Environment", &rootKey);
+	rest = RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\JavaSoft\\Java Runtime Environment", 0, KEY_READ, &rootKey);
 	if (rest != ERROR_SUCCESS) {
-		return E_FAIL;
+		return HRESULT_FROM_WIN32(rest);
 	}
 
 	LONG cbLength = 0;
 	rest = RegQueryValue(rootKey, L"CurrentVersion", nullptr, &cbLength);
 	if (rest != ERROR_SUCCESS) {
 		RegCloseKey(rootKey);
-		return E_FAIL;
+		return HRESULT_FROM_WIN32(rest);
 	}
 	LPWSTR version = new wchar_t[cbLength];
 	rest = RegQueryValue(rootKey, L"CurrentVersion", version, &cbLength);
 	if (rest != ERROR_SUCCESS) {
 		RegCloseKey(rootKey);
-		return E_FAIL;
+		return HRESULT_FROM_WIN32(rest);
 	}
 
 	HKEY versionKey;
-	rest = RegOpenKey(rootKey, version, &versionKey);
+	rest = RegOpenKeyEx(rootKey, version, 0, KEY_READ, &versionKey);
 	if (rest != ERROR_SUCCESS) {
 		RegCloseKey(rootKey);
-		return E_FAIL;
+		return HRESULT_FROM_WIN32(rest);
 	}
 	rest = RegQueryValue(versionKey, L"JavaHome", nullptr, &cbLength);
 	LPWSTR javaHome = new wchar_t[cbLength];
 	if (rest != ERROR_SUCCESS) {
 		RegCloseKey(versionKey);
 		RegCloseKey(rootKey);
-		return E_FAIL;
+		return HRESULT_FROM_WIN32(rest);
 	}
 	rest = RegQueryValue(versionKey, L"JavaHome", javaHome, &cbLength);
 	if (rest != ERROR_SUCCESS) {
 		RegCloseKey(versionKey);
 		RegCloseKey(rootKey);
-		return E_FAIL;
+		return HRESULT_FROM_WIN32(rest);
 	}
 
 	return tryLoadJava(getJVMModulePath1(javaHome), jarPath);
@@ -117,11 +117,10 @@ HRESULT startJVM(std::string pluginPath)
 	if (vm != nullptr)
 		return S_OK; // OK to call for many times!
 
-	LPCSTR jarPath = ("-Djava.class.path=.;" + pluginPath + "sgsplugin.jar").c_str();
-	if (tryLoadJavaFromJavaHome(jarPath) != S_OK
-		&& tryLoadJavaFromRegistry(jarPath) != S_OK)
-		return E_FAIL;
-	return S_OK;
+	auto jarPath = "-Djava.class.path=.;" + pluginPath + "sgsplugin.jar";
+	if (tryLoadJavaFromJavaHome(jarPath) == S_OK)
+		return S_OK;
+	return tryLoadJavaFromRegistry(jarPath);
 }
 
 HRESULT destroyJVM()
