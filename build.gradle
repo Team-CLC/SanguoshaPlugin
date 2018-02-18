@@ -30,7 +30,11 @@ dependencies {
 task fatJar(type: Jar) {
     manifest {
     }
-    baseName = 'sgsplugin'
+    archiveName = 'sgsplugin.jar'
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
 }

@@ -7,7 +7,7 @@ public class CardSendEvent extends Event {
     private Card card;
 
     public CardSendEvent(Card card) {
-        super("card_send");
+        super(null, "card_send");
         this.card = card;
     }
 

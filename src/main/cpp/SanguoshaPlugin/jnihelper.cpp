@@ -1,21 +1,36 @@
 #include "stdafx.h"
 #include "jnihelper.h"
+#include <fstream>
+
+#define JAVA_DEBUG
 
 HMODULE jmodule = nullptr;
 JavaVM *vm = nullptr;
 
 #define MAX_PATH_SIZE 512
-HRESULT tryLoadJava(std::wstring path, std::atring jarPath)
+HRESULT tryLoadJava(std::wstring path, std::string jarPath)
 {
 	JavaVMInitArgs startupArgs;
-	JavaVMOption options[3];
-	options[0].optionString = "-Djava.compiler=NONE";
-	options[1].optionString = new char[MAX_PATH_SIZE];
-	strcpy(options[1].optionString, jarPath.c_str());
-	options[2].optionString = "-verbose:NONE";
+#ifdef JAVA_DEBUG
+	JavaVMOption options[4];
+#else
+	JavaVMOption options[1];
+#endif
+	options[0].optionString = new char[MAX_PATH_SIZE];
+	strcpy(options[0].optionString, ("-Djava.class.path=.;" + jarPath).c_str());
+#ifdef JAVA_DEBUG
+	options[1].optionString = "-Xdebug";
+	options[2].optionString = "-Xnoagent";
+	options[3].optionString = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=9999";
+#endif
+
 
 	startupArgs.version = JNI_VERSION_1_8;
-	startupArgs.nOptions = 3;
+#ifdef JAVA_DEBUG
+	startupArgs.nOptions = 4;
+#else
+	startupArgs.nOptions = 1;
+#endif
 	startupArgs.options = options;
 	startupArgs.ignoreUnrecognized = JNI_TRUE;
 
@@ -55,6 +70,24 @@ std::wstring getJVMModulePath2(LPWSTR javaHome) {
 	return path;
 }
 
+std::wstring getJVMModulePath3(LPWSTR javaHome) {
+	std::wstring path = javaHome;
+	wchar_t lastChar = *(path.end() - 1);
+	if (lastChar != '\\' && lastChar != '/')
+		path += '\\';
+	path += L"bin\\client\\jvm.dll";
+	return path;
+}
+
+std::wstring getJVMModulePath4(LPWSTR javaHome) {
+	std::wstring path = javaHome;
+	wchar_t lastChar = *(path.end() - 1);
+	if (lastChar != '\\' && lastChar != '/')
+		path += '\\';
+	path += L"jre\\bin\\client\\jvm.dll";
+	return path;
+}
+
 HRESULT tryLoadJavaFromJavaHome(std::string jarPath) {
 	LPWSTR javaHome = new wchar_t[MAX_PATH_SIZE];
 	DWORD envCode = GetEnvironmentVariable(L"JAVA_HOME", javaHome, MAX_PATH_SIZE);
@@ -65,10 +98,18 @@ HRESULT tryLoadJavaFromJavaHome(std::string jarPath) {
 	if (res == S_OK) return res;
 
 	path = getJVMModulePath2(javaHome);
+	res = tryLoadJava(path, jarPath);
+	if (res == S_OK) return res;
+
+	path = getJVMModulePath3(javaHome);
+	res = tryLoadJava(path, jarPath);
+	if (res == S_OK) return res;
+
+	path = getJVMModulePath4(javaHome);
 	return tryLoadJava(path, jarPath);
 }
 
-HRESLT tryLoadJavaFromRegistry(std::string jarPath) {
+HRESULT tryLoadJavaFromRegistry(std::string jarPath) {
 	HKEY rootKey;
 	LSTATUS rest;
 	rest = RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\JavaSoft\\Java Runtime Environment", 0, KEY_READ, &rootKey);
@@ -109,7 +150,10 @@ HRESLT tryLoadJavaFromRegistry(std::string jarPath) {
 		return HRESULT_FROM_WIN32(rest);
 	}
 
-	return tryLoadJava(getJVMModulePath1(javaHome), jarPath);
+	auto res = tryLoadJava(getJVMModulePath1(javaHome), jarPath);
+	if (res == S_OK) return res;
+
+	return tryLoadJava(getJVMModulePath3(javaHome), jarPath);
 }
 
 HRESULT startJVM(std::string pluginPath)
@@ -117,7 +161,14 @@ HRESULT startJVM(std::string pluginPath)
 	if (vm != nullptr)
 		return S_OK; // OK to call for many times!
 
-	auto jarPath = "-Djava.class.path=.;" + pluginPath + "sgsplugin.jar";
+	auto jarPath = pluginPath + "sgsplugin.jar";
+	
+	std::wifstream javaPath(pluginPath + "javahome.txt");
+	if (javaPath) {
+		std::wstring str;
+		std::getline(javaPath, str);
+		return tryLoadJava(str, jarPath);
+	}
 	if (tryLoadJavaFromJavaHome(jarPath) == S_OK)
 		return S_OK;
 	return tryLoadJavaFromRegistry(jarPath);

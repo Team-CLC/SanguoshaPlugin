@@ -7,14 +7,14 @@
 #include "stdafx.h"
 #include "string"
 #include "cqp.h"
-#include "appmain.h" //åº”ç”¨AppIDç­‰ä¿¡æ¯ï¼Œè¯·æ­£ç¡®å¡«å†™ï¼Œå¦åˆ™é…·Qå¯èƒ½æ— æ³•åŠ è½½
+#include "appmain.h" //Ó¦ÓÃAppIDµÈĞÅÏ¢£¬ÇëÕıÈ·ÌîĞ´£¬·ñÔò¿áQ¿ÉÄÜÎŞ·¨¼ÓÔØ
 #include <jni.h>
 #include "jnihelper.h"
 #include "com_github_teamclc_sanguosha_NativeBridge.h"
 
 using namespace std;
 
-int ac = -1; //AuthCode è°ƒç”¨é…·Qçš„æ–¹æ³•æ—¶éœ€è¦ç”¨åˆ°
+int ac = -1; //AuthCode µ÷ÓÃ¿áQµÄ·½·¨Ê±ĞèÒªÓÃµ½
 bool enabled = false;
 
 jclass classBridge;
@@ -23,7 +23,7 @@ jmethodID methodDestroy;
 jmethodID methodGroupMessageReceived;
 jmethodID methodOpenSetting;
 
-void initalizeIDs(JNIEnv * env);
+void initalizeJNI(JNIEnv * env);
 
 #define WITH_JNIENV_BEGIN if (isJVMStarted()) { \
 JNIEnv *env = allocJNIEnv();
@@ -44,10 +44,10 @@ CQEVENT(int32_t, __eventExit, 0)() {
 }
 
 /*
-* Type=1003 åº”ç”¨å·²è¢«å¯ç”¨
-* å½“åº”ç”¨è¢«å¯ç”¨åï¼Œå°†æ”¶åˆ°æ­¤äº‹ä»¶ã€‚
-* å¦‚æœé…·Qè½½å…¥æ—¶åº”ç”¨å·²è¢«å¯ç”¨ï¼Œåˆ™åœ¨_eventStartup(Type=1001,é…·Qå¯åŠ¨)è¢«è°ƒç”¨åï¼Œæœ¬å‡½æ•°ä¹Ÿå°†è¢«è°ƒç”¨ä¸€æ¬¡ã€‚
-* å¦‚éå¿…è¦ï¼Œä¸å»ºè®®åœ¨è¿™é‡ŒåŠ è½½çª—å£ã€‚ï¼ˆå¯ä»¥æ·»åŠ èœå•ï¼Œè®©ç”¨æˆ·æ‰‹åŠ¨æ‰“å¼€çª—å£ï¼‰
+* Type=1003 Ó¦ÓÃÒÑ±»ÆôÓÃ
+* µ±Ó¦ÓÃ±»ÆôÓÃºó£¬½«ÊÕµ½´ËÊÂ¼ş¡£
+* Èç¹û¿áQÔØÈëÊ±Ó¦ÓÃÒÑ±»ÆôÓÃ£¬ÔòÔÚ_eventStartup(Type=1001,¿áQÆô¶¯)±»µ÷ÓÃºó£¬±¾º¯ÊıÒ²½«±»µ÷ÓÃÒ»´Î¡£
+* Èç·Ç±ØÒª£¬²»½¨ÒéÔÚÕâÀï¼ÓÔØ´°¿Ú¡££¨¿ÉÒÔÌí¼Ó²Ëµ¥£¬ÈÃÓÃ»§ÊÖ¶¯´ò¿ª´°¿Ú£©
 */
 CQEVENT(int32_t, __eventEnable, 0)() {
 	enabled = true;
@@ -56,16 +56,16 @@ CQEVENT(int32_t, __eventEnable, 0)() {
 	if (!isJVMStarted()) {
 		auto ret = startJVM(CQ_getAppDirectory(ac));
 		if (ret != S_OK) {
-			// è‡ªçˆ†
+			// ×Ô±¬
 			LPSTR msg = new char[512];
-			sprintf(msg, "ä¸‰å›½æ€æ’ä»¶ï¼šåŠ è½½Javaè™šæ‹Ÿæœºå¤±è´¥ï¼è¯·ç¡®ä¿ç³»ç»Ÿä¸­æœ‰Java Runtime Enviroment 8æˆ–ä»¥ä¸Šç‰ˆæœ¬ï¼é”™è¯¯ä»£ç %#010x", (int)ret);
+			sprintf(msg, "Èı¹úÉ±²å¼ş£º¼ÓÔØJavaĞéÄâ»úÊ§°Ü£¡ÇëÈ·±£ÏµÍ³ÖĞÓĞJava Runtime Enviroment 8»òÒÔÉÏ°æ±¾£¡´íÎó´úÂë%#010x", (int)ret);
 			CQ_setFatal(ac, msg);
 		}
 		env = allocJNIEnv();
 		if (env == nullptr) {
-			CQ_setFatal(ac, "ä¸‰å›½æ€æ’ä»¶ï¼šæ— æ³•è·å–JNIEnvï¼è¯·æ£€æŸ¥æ‚¨çš„Javaå®‰è£…æ˜¯å¦æœ‰è¯¯ï¼Javaæ˜¯å¦æŸåï¼");
+			CQ_setFatal(ac, "Èı¹úÉ±²å¼ş£ºÎŞ·¨»ñÈ¡JNIEnv£¡Çë¼ì²éÄúµÄJava°²×°ÊÇ·ñÓĞÎó£¡JavaÊÇ·ñËğ»µ£¡");
 		}
-		initalizeIDs(env);
+		initalizeJNI(env);
 	}
 	else env = allocJNIEnv();
 		
@@ -75,10 +75,10 @@ CQEVENT(int32_t, __eventEnable, 0)() {
 
 
 /*
-* Type=1004 åº”ç”¨å°†è¢«åœç”¨
-* å½“åº”ç”¨è¢«åœç”¨å‰ï¼Œå°†æ”¶åˆ°æ­¤äº‹ä»¶ã€‚
-* å¦‚æœé…·Qè½½å…¥æ—¶åº”ç”¨å·²è¢«åœç”¨ï¼Œåˆ™æœ¬å‡½æ•°*ä¸ä¼š*è¢«è°ƒç”¨ã€‚
-* æ— è®ºæœ¬åº”ç”¨æ˜¯å¦è¢«å¯ç”¨ï¼Œé…·Qå…³é—­å‰æœ¬å‡½æ•°éƒ½*ä¸ä¼š*è¢«è°ƒç”¨ã€‚
+* Type=1004 Ó¦ÓÃ½«±»Í£ÓÃ
+* µ±Ó¦ÓÃ±»Í£ÓÃÇ°£¬½«ÊÕµ½´ËÊÂ¼ş¡£
+* Èç¹û¿áQÔØÈëÊ±Ó¦ÓÃÒÑ±»Í£ÓÃ£¬Ôò±¾º¯Êı*²»»á*±»µ÷ÓÃ¡£
+* ÎŞÂÛ±¾Ó¦ÓÃÊÇ·ñ±»ÆôÓÃ£¬¿áQ¹Ø±ÕÇ°±¾º¯Êı¶¼*²»»á*±»µ÷ÓÃ¡£
 */
 CQEVENT(int32_t, __eventDisable, 0)() {
 	enabled = false;
@@ -91,7 +91,7 @@ CQEVENT(int32_t, __eventDisable, 0)() {
 
 
 /*
-* Type=2 ç¾¤æ¶ˆæ¯
+* Type=2 ÈºÏûÏ¢
 */
 CQEVENT(int32_t, __eventGroupMsg, 36)(int32_t subType, int32_t msgId, int64_t fromGroup, int64_t fromQQ, const char *fromAnonymous, const char *msg, int32_t font) {
 	jboolean b = JNI_FALSE;
@@ -105,9 +105,9 @@ CQEVENT(int32_t, __eventGroupMsg, 36)(int32_t subType, int32_t msgId, int64_t fr
 
 
 /*
-* Type=301 è¯·æ±‚-å¥½å‹æ·»åŠ 
-* msg é™„è¨€
-* responseFlag åé¦ˆæ ‡è¯†(å¤„ç†è¯·æ±‚ç”¨)
+* Type=301 ÇëÇó-ºÃÓÑÌí¼Ó
+* msg ¸½ÑÔ
+* responseFlag ·´À¡±êÊ¶(´¦ÀíÇëÇóÓÃ)
 */
 CQEVENT(int32_t, __eventRequest_AddFriend, 24)(int32_t subType, int32_t sendTime, int64_t fromQQ, const char *msg, const char *responseFlag) {
 
@@ -116,8 +116,8 @@ CQEVENT(int32_t, __eventRequest_AddFriend, 24)(int32_t subType, int32_t sendTime
 }
 
 /*
-* èœå•ï¼Œå¯åœ¨ .json æ–‡ä»¶ä¸­è®¾ç½®èœå•æ•°ç›®ã€å‡½æ•°å
-* å¦‚æœä¸ä½¿ç”¨èœå•ï¼Œè¯·åœ¨ .json åŠæ­¤å¤„åˆ é™¤æ— ç”¨èœå•
+* ²Ëµ¥£¬¿ÉÔÚ .json ÎÄ¼şÖĞÉèÖÃ²Ëµ¥ÊıÄ¿¡¢º¯ÊıÃû
+* Èç¹û²»Ê¹ÓÃ²Ëµ¥£¬ÇëÔÚ .json ¼°´Ë´¦É¾³ıÎŞÓÃ²Ëµ¥
 */
 CQEVENT(int32_t, __menuSettings, 0)() {
 	WITH_JNIENV_BEGIN
@@ -126,15 +126,27 @@ CQEVENT(int32_t, __menuSettings, 0)() {
 	return 0;
 }
 
-void initalizeIDs(JNIEnv * env) {
-	classBridge = (jclass) (env->NewGlobalRef(env->FindClass("com.github.teamclc.sanguosha.NativeBridge")));
+CQEVENT(int32_t, __menuSetJavaPath, 0)() {
+	MessageBox(nullptr, L"ÇëÔÚ¿áQ°²×°Ä¿Â¼µÄapp\\com.github.teamclc.sanguoshaÎÄ¼ş¼ĞÏÂĞÂ½¨ÎÄ¼şjavahome.txt£¬ÆäÖĞÄÚÈİÎªÒ»¸ö32Î»JavaµÄjvm.dllÎ»ÖÃ£¬ÀıÈçC:\\Program Files (x86)\\Java\\jre1.8.0_161\\bin\\client£¨»òserver£©\\jvm.dll£¬ÈôĞèÒª×Ô¶¯²éÕÒÔòÉ¾³ı¸ÃÎÄ¼ş¼´¿É¡£×¢ÒâÈôÔÚ²å¼şÒÑ¾­Æô¶¯µÄÇé¿öÏÂĞèÒª¸ü»»Java°²×°ĞëÖØÆô¿áQ¡£", L"Ö¸¶¨·½·¨", MB_ICONINFORMATION);
+	return 0;
+}
+
+void initalizeJNI(JNIEnv * env) {
+	classBridge = (jclass) (env->NewGlobalRef(env->FindClass("com/github/teamclc/sanguosha/NativeBridge")));
 	methodInit = env->GetStaticMethodID(classBridge, "init", "()V");
 	methodDestroy = env->GetStaticMethodID(classBridge, "destroy", "()V");
 	methodGroupMessageReceived = env->GetStaticMethodID(classBridge, "groupMessageReceived", "(Ljava/lang/String;IIJJ)Z");
 	methodOpenSetting = env->GetStaticMethodID(classBridge, "openSetting", "()V");
+
+	const JNINativeMethod methods[] = { 
+		{ "log", "(Ljava/lang/String;ILjava/lang/String;)V", (void*)&Java_com_github_teamclc_sanguosha_NativeBridge_log },
+		{ "sendGroupMessage", "(Ljava/lang/String;J)I", (void*)&Java_com_github_teamclc_sanguosha_NativeBridge_sendGroupMessage },
+		{ "sendPrivateMessage", "(Ljava/lang/String;J)I", (void*)&Java_com_github_teamclc_sanguosha_NativeBridge_sendPrivateMessage }
+	};
+	env->RegisterNatives(classBridge, methods, 3);
 }
 
-JNIEXPORT void JNICALL Java_com_github_teamclc_sanguosha_NativeBridge_log
+extern "C" JNIEXPORT void JNICALL Java_com_github_teamclc_sanguosha_NativeBridge_log
 (JNIEnv * env, jclass klass, jstring message, jint priority, jstring category) {
 	LPCSTR msg = jstringToLPSTR(env, message);
 	LPCSTR cat = jstringToLPSTR(env, category);
@@ -142,7 +154,7 @@ JNIEXPORT void JNICALL Java_com_github_teamclc_sanguosha_NativeBridge_log
 	delete[] msg, cat;
 }
 
-JNIEXPORT jint JNICALL Java_com_github_teamclc_sanguosha_NativeBridge_sendGroupMessage
+extern "C" JNIEXPORT jint JNICALL Java_com_github_teamclc_sanguosha_NativeBridge_sendGroupMessage
 (JNIEnv * env, jclass klass, jstring message, jlong toGroup) {
 	LPCSTR msg = jstringToLPSTR(env, message);
 	int ret = CQ_sendGroupMsg(ac, toGroup, msg);
@@ -150,7 +162,7 @@ JNIEXPORT jint JNICALL Java_com_github_teamclc_sanguosha_NativeBridge_sendGroupM
 	return ret;
 }
 
-JNIEXPORT jint JNICALL Java_com_github_teamclc_sanguosha_NativeBridge_sendPrivateMessage
+extern "C" JNIEXPORT jint JNICALL Java_com_github_teamclc_sanguosha_NativeBridge_sendPrivateMessage
 (JNIEnv * env, jclass klass, jstring message, jlong toQQ) {
 	LPCSTR msg = jstringToLPSTR(env, message);
 	int ret = CQ_sendPrivateMsg(ac, toQQ, msg);
