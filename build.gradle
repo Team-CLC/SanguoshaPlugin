@@ -22,6 +22,8 @@ dependencies {
     compile 'cc.huajistudio.aeb:asmeventbus:0.1'
     compile 'com.google.guava:guava:19.0'
     compile 'net.sf.jopt-simple:jopt-simple:4.9'
+    compile 'org.slf4j:slf4j-api:1.7.13'
+
     testCompile 'junit:junit:4.12'
     testCompile 'org.jetbrains.kotlin:kotlin-test'
     testCompile 'org.jetbrains.kotlin:kotlin-test-junit'
