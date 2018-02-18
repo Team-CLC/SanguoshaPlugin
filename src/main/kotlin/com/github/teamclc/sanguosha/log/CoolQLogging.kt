@@ -17,9 +17,9 @@ class CoolQLoggerFactory: ILoggerFactory {
 }
 
 private const val WARN_PRIORITY = 20
-private const val ERROR_PRIORITY = 20
-private const val DEBUG_PRIORITY = 20
-private const val INFO_PRIORITY = 20
+private const val ERROR_PRIORITY = 30
+private const val DEBUG_PRIORITY = 0
+private const val INFO_PRIORITY = 10
 class CoolQLogger(category: String): MarkerIgnoringBase() {
     init {
         name = category
