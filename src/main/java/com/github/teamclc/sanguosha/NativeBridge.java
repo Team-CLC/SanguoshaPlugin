@@ -1,5 +1,8 @@
 package com.github.teamclc.sanguosha;
 
+import joptsimple.OptionParser;
+import joptsimple.OptionSpecBuilder;
+
 /**
  * Created by Cyl18 on 2/17/2018.
  */
@@ -24,7 +27,7 @@ public class NativeBridge {
     public static boolean groupMessageReceived(String message, int subtype, int msgid, long fromQQ, long fromGroup) {
         if (message.contains("sgstest")) {
             sendGroupMessage("测试Sgs。", fromGroup);
-            sendPrivateMesaage("测试Sgs。", fromQQ);
+            sendPrivateMessage("测试Sgs。", fromQQ);
             return true;
         }
         return false;
