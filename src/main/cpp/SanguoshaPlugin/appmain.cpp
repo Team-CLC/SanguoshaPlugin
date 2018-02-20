@@ -18,6 +18,7 @@ int ac = -1; //AuthCode 调用酷Q的方法时需要用到
 bool enabled = false;
 
 jclass classBridge;
+jmethodID methodGlobalInit;
 jmethodID methodInit;
 jmethodID methodDestroy;
 jmethodID methodGroupMessageReceived;
@@ -66,6 +67,7 @@ CQEVENT(int32_t, __eventEnable, 0)() {
 			CQ_setFatal(ac, "三国杀插件：无法获取JNIEnv！请检查您的Java安装是否有误！Java是否损坏！");
 		}
 		initalizeJNI(env);
+		env->CallStaticVoidMethod(classBridge, methodGlobalInit);
 	}
 	else env = allocJNIEnv();
 		
@@ -133,6 +135,7 @@ CQEVENT(int32_t, __menuSetJavaPath, 0)() {
 
 void initalizeJNI(JNIEnv * env) {
 	classBridge = (jclass) (env->NewGlobalRef(env->FindClass("com/github/teamclc/sanguosha/NativeBridge")));
+	methodGlobalInit = env->GetStaticMethodID(classBridge, "globalInit", "()V");
 	methodInit = env->GetStaticMethodID(classBridge, "init", "()V");
 	methodDestroy = env->GetStaticMethodID(classBridge, "destroy", "()V");
 	methodGroupMessageReceived = env->GetStaticMethodID(classBridge, "groupMessageReceived", "(Ljava/lang/String;IIJJ)Z");

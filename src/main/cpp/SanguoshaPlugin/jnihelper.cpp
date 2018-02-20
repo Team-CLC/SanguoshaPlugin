@@ -2,7 +2,7 @@
 #include "jnihelper.h"
 #include <fstream>
 
-#define JAVA_DEBUG
+//#define JAVA_DEBUG
 
 HMODULE jmodule = nullptr;
 JavaVM *vm = nullptr;
